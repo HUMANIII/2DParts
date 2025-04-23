@@ -1,35 +1,40 @@
 using UnityEngine;
+
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
+
     public static T Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<T>();
+                // Find the first instance of the object (recommended in Unity >= 2023)
+                _instance = Object.FindFirstObjectByType<T>();
+
+                // Alternatively, if any instance is acceptable, use FindAnyObjectByType<T>()
                 if (_instance == null)
                 {
-                    GameObject singletonObject = new GameObject(typeof(T).Name);
-                    _instance = singletonObject.AddComponent<T>();
-                    DontDestroyOnLoad(singletonObject);
+                    Debug.LogError($"Singleton of type {typeof(T)} could not be found!");
                 }
             }
+
             return _instance;
         }
     }
 
-    protected virtual void Awake()
+    protected void Awake()
     {
-        if (_instance != null && _instance != this as T)
+        // Ensure that there's only one instance of the Singleton
+        if (_instance == null)
         {
-            Destroy(gameObject);
-            return;
+            _instance = this as T;
         }
-        _instance = this as T;
-        DontDestroyOnLoad(gameObject);
+        else if (_instance != this)
+        {
+            Debug.LogError($"Multiple instances of Singleton of type {typeof(T)} detected. Destroying duplicate!");
+            Destroy(this.gameObject);
+        }
     }
-
-    public virtual void Initialize() { }
 }
